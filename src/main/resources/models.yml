@@ -1,0 +1,35 @@
+# Base visual centralizada para os plugins do servidor.
+special-items:
+  models:
+    artifact:
+      chunk-loader: 7101
+      explorer-clock: 7102
+      traveler-boots: 7103
+      smelting-totem: 7104
+    tool:
+      seismic-pickaxe: 7201
+      lumber-axe: 7202
+      excavator-shovel: 7203
+      farmer-hoe: 7204
+    armor:
+      vampiric: 7301
+      guardian: 7302
+      explorer: 7303
+    set:
+      miner: 7401
+      fisher: 7402
+      vampiric: 7403
+      guardian: 7404
+      explorer: 7405
+    scroll:
+      repair: 7501
+      protection: 7502
+      enchantment: 7503
+    evolution:
+      ancient-sword: 7601
+  equipped-models:
+    armor:
+      vampiric_chestplate: diamond_chestplate_uncharted
+      guardian_chestplate: diamond_chestplate_guardian_uncharted
+      explorer_chestplate: diamond_chestplate_explorer_uncharted
+      traveler_boots: leather_boots_uncharted

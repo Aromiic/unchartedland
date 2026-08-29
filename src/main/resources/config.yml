@@ -1,0 +1,28 @@
+resource-pack:
+  enabled: true
+  source: "GITHUB"
+  url: "https://raw.githubusercontent.com/Aromiic/unchartedland/main/UnchartedLand.zip"
+  sha1: ""
+  required: true
+  apply-on-join: true
+  preload-before-join: true
+  join-delay-ticks: 20
+  join-feedback:
+    enabled: true
+    message: "&eA carregar a textura oficial..."
+  retry-delay-ticks: 80
+  prompt: "&6Uncharted Land &7vai enviar-te o pack oficial."
+  debug: false
+  log-statuses: true
+  local-server:
+    enabled: false
+    bind-host: "0.0.0.0"
+    public-host: ""
+    public-scheme: "http"
+    public-url: ""
+    port: 8123
+    path: "/UnchartedLand.zip"
+    file: "UnchartedLand.zip"
+
+models-file: "models.yml"
+skulls-file: "skulls.yml"

@@ -1,0 +1,50 @@
+# IDs de skulls centralizados. Os plugins consomem daqui antes de usarem fallback.
+special-items:
+  token-icons:
+    return-token:
+      skull-id: "96944"
+    keep-inventory-token:
+      skull-id: "122136"
+    repair-token:
+      skull-id: "18201"
+    claim-token:
+      skull-id: "MHF_Block"
+  scroll-icons:
+    repair:
+      skull-id: "18201"
+    protection:
+      skull-id: "106730"
+    enchantment:
+      skull-id: "125267"
+  amulets:
+    speed_amulet:
+      skull-id: "122133"
+    warrior_amulet:
+      skull-id: "54724"
+    miner_xp_amulet:
+      skull-id: "124702"
+    fortune_amulet:
+      skull-id: "127333"
+  gems:
+    ruby:
+      skull-id: "114401"
+    sapphire:
+      skull-id: "124830"
+    emerald:
+      skull-id: "124832"
+    amethyst:
+      skull-id: "124829"
+  relics:
+    time_relic:
+      skull-id: "47152"
+    wind_relic:
+      skull-id: "105319"
+    lava_relic:
+      skull-id: "98284"
+    water_relic:
+      skull-id: "118716"
+  head-textures:
+    pirate:
+      texture: "MHF_Pirate"
+    token:
+      texture: "MHF_Coin"

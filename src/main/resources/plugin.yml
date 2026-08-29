@@ -1,0 +1,14 @@
+name: AroResources
+main: pt.joaoveiga.aroresources.AroResources
+version: 1.0.0
+author: Joao
+api-version: '1.21'
+softdepend: [Vault]
+commands:
+  txtpack:
+    description: Main command for AroResources
+    usage: /txtpack <reload|send>
+    aliases: [aroresources]
+permissions:
+  aresources.admin:
+    default: op
