@@ -126,6 +126,14 @@ public class ResourcePackManager {
         return addCacheBuster(currentUrl, getPackSha1(), packBuildToken);
     }
 
+    public synchronized String getPackUrlForDelivery() {
+        String currentUrl = getPackUrl();
+        if (currentUrl.isEmpty()) {
+            return "";
+        }
+        return addDeliveryToken(currentUrl, UUID.randomUUID().toString().replace("-", ""));
+    }
+
     public synchronized String getPackSha1() {
         String configuredSha1 = plugin.getConfig().getString("resource-pack.sha1", "");
         if (configuredSha1 != null && !configuredSha1.trim().isEmpty()) {
@@ -159,7 +167,7 @@ public class ResourcePackManager {
             return;
         }
 
-        String url = getPackUrl();
+        String url = getPackUrlForDelivery();
         if (url.isEmpty()) {
             plugin.getLogger().warning("Sem URL de resource pack disponivel para enviar a " + player.getName() + ".");
             return;
@@ -439,6 +447,20 @@ public class ResourcePackManager {
             result += separator + "build=" + versionToken;
         }
         return result;
+    }
+
+    private String addDeliveryToken(String url, String deliveryToken) {
+        if (url == null || url.trim().isEmpty() || deliveryToken == null || deliveryToken.trim().isEmpty()) {
+            return url == null ? "" : url.trim();
+        }
+
+        String normalizedUrl = url.trim();
+        if (normalizedUrl.contains("delivery=" + deliveryToken)) {
+            return normalizedUrl;
+        }
+
+        String separator = normalizedUrl.contains("?") ? "&" : "?";
+        return normalizedUrl + separator + "delivery=" + deliveryToken;
     }
 
     private boolean hasConfiguredUrl() {
