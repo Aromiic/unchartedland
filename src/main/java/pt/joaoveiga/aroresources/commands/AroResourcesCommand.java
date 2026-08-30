@@ -66,9 +66,20 @@ public class AroResourcesCommand implements CommandExecutor, TabCompleter {
     private void sendPackState(CommandSender sender) {
         File packFile = plugin.getResourcePackManager().getPackFile();
         sender.sendMessage("§7Ficheiro: §f" + (packFile == null ? "desconhecido" : packFile.getAbsolutePath()));
-        sender.sendMessage("§7URL: §f" + safe(plugin.getResourcePackManager().getPackUrl()));
+        sender.sendMessage("§7Origem: §f" + safe(plugin.getResourcePackManager().getPackSource()));
+        sender.sendMessage("§7URL base: §f" + safe(basePackUrl()));
+        sender.sendMessage("§7URL final: §f" + safe(plugin.getResourcePackManager().getPackUrl()));
         sender.sendMessage("§7SHA-1: §f" + safe(plugin.getResourcePackManager().getPackSha1()));
         sender.sendMessage("§7Servidor local: §f" + (plugin.getResourcePackManager().isLocalServerActive() ? "ativo" : "desativado"));
+    }
+
+    private String basePackUrl() {
+        String source = plugin.getConfig().getString("resource-pack.source", "GITHUB");
+        if (source != null && source.trim().equalsIgnoreCase("GITHUB")) {
+            return "https://raw.githubusercontent.com/Aromiic/unchartedland/main/UnchartedLand.zip";
+        }
+        String configuredUrl = plugin.getConfig().getString("resource-pack.url", "");
+        return configuredUrl == null || configuredUrl.trim().isEmpty() ? "<vazio>" : configuredUrl.trim();
     }
 
     private String safe(String value) {

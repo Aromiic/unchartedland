@@ -15,8 +15,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourcePackListener implements Listener {
 
+    private static final int DEFAULT_MAX_RETRY_ATTEMPTS = 3;
+
     private final AroResources plugin;
     private final Set<UUID> retryScheduled = ConcurrentHashMap.newKeySet();
+    private final java.util.Map<UUID, Integer> retryAttempts = new ConcurrentHashMap<>();
 
     public ResourcePackListener(AroResources plugin) {
         this.plugin = plugin;
@@ -82,18 +85,22 @@ public class ResourcePackListener implements Listener {
             case DECLINED:
                 log("Jogador " + event.getPlayer().getName() + " recusou o resource pack.");
                 retryScheduled.remove(event.getPlayer().getUniqueId());
+                retryAttempts.remove(event.getPlayer().getUniqueId());
                 break;
             case DISCARDED:
                 log("Jogador " + event.getPlayer().getName() + " descartou o resource pack.");
                 retryScheduled.remove(event.getPlayer().getUniqueId());
+                retryAttempts.remove(event.getPlayer().getUniqueId());
                 break;
             case SUCCESSFULLY_LOADED:
                 log("Jogador " + event.getPlayer().getName() + " carregou o resource pack com sucesso.");
                 retryScheduled.remove(event.getPlayer().getUniqueId());
+                retryAttempts.remove(event.getPlayer().getUniqueId());
                 break;
             case ACCEPTED:
                 log("Jogador " + event.getPlayer().getName() + " aceitou o resource pack.");
                 retryScheduled.remove(event.getPlayer().getUniqueId());
+                retryAttempts.remove(event.getPlayer().getUniqueId());
                 break;
             default:
                 log("Estado do resource pack para " + event.getPlayer().getName() + ": " + event.getStatus());
@@ -106,8 +113,16 @@ public class ResourcePackListener implements Listener {
             debug("Retry do resource pack ignorado para uuid=" + uuid + " porque já estava agendado.");
             return;
         }
+        int maxRetryAttempts = Math.max(1, plugin.getConfig().getInt("resource-pack.retry-max-attempts", DEFAULT_MAX_RETRY_ATTEMPTS));
+        int attempt = retryAttempts.merge(uuid, 1, Integer::sum);
+        if (attempt > maxRetryAttempts) {
+            retryScheduled.remove(uuid);
+            retryAttempts.remove(uuid);
+            plugin.getLogger().warning("O resource pack falhou " + (attempt - 1) + " vezes para uuid=" + uuid + ". Vou parar de reenviar para evitar retry infinito.");
+            return;
+        }
         long retryDelayTicks = Math.max(20L, plugin.getConfig().getLong("resource-pack.retry-delay-ticks", 80L));
-        debug("Retry do resource pack agendado para uuid=" + uuid + " em " + retryDelayTicks + " ticks.");
+        debug("Retry do resource pack agendado para uuid=" + uuid + " em " + retryDelayTicks + " ticks. tentativa=" + attempt + "/" + maxRetryAttempts);
         plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
             @Override
             public void run() {

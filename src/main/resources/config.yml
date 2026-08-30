@@ -11,6 +11,7 @@ resource-pack:
     enabled: true
     message: "&eA carregar a textura oficial..."
   retry-delay-ticks: 80
+  retry-max-attempts: 3
   prompt: "&6Uncharted Land &7vai enviar-te o pack oficial."
   debug: false
   log-statuses: true

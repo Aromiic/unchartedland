@@ -65,9 +65,20 @@ public class ResourcePackManager {
         boolean localServerEnabled = plugin.getConfig().getBoolean("resource-pack.local-server.enabled", false);
         String source = plugin.getConfig().getString("resource-pack.source", "GITHUB");
         String configuredUrl = normalizeUrl(plugin.getConfig().getString("resource-pack.url", ""));
+        String configuredPublicUrl = normalizeUrl(plugin.getConfig().getString("resource-pack.local-server.public-url", ""));
+        String publicHost = resolvePublicHost();
 
         if (localServerEnabled || (source != null && source.trim().equalsIgnoreCase("LOCAL"))) {
-            if (startHttpServer(currentPackFile)) {
+            if (!configuredPublicUrl.isEmpty()) {
+                this.packUrl = configuredPublicUrl;
+                this.localServerActive = true;
+                debug("A usar URL publica configurada para o servidor local: " + this.packUrl);
+                return;
+            }
+
+            if (looksLocalOrUnreachable(publicHost)) {
+                plugin.getLogger().warning("resource-pack.local-server parece estar apontado para um endereço local/inacessível (" + publicHost + "). Vou ignorar o servidor local e usar GitHub raw.");
+            } else if (startHttpServer(currentPackFile)) {
                 return;
             }
             plugin.getLogger().warning("O servidor local do resource pack falhou; a tentar fallback para URL externa.");
@@ -76,7 +87,7 @@ public class ResourcePackManager {
         if (!configuredUrl.isEmpty()) {
             this.packUrl = configuredUrl;
             this.localServerActive = false;
-            debug("A usar URL externa do config: " + this.packUrl);
+            plugin.getLogger().info("Resource pack em modo externo/GitHub: source=" + getPackSource() + ", url-base=" + this.packUrl);
             return;
         }
 
@@ -85,7 +96,7 @@ public class ResourcePackManager {
         if (source != null && source.trim().equalsIgnoreCase("LOCAL")) {
             plugin.getLogger().warning("resource-pack.source=LOCAL foi pedido, mas o servidor local nao arrancou. A usar GitHub raw como fallback.");
         }
-        plugin.getLogger().info("Resource pack a usar GitHub raw por defeito: " + this.packUrl);
+        plugin.getLogger().info("Resource pack a usar GitHub raw por defeito: source=" + getPackSource() + ", url-base=" + this.packUrl);
     }
 
     public boolean isEnabled() {
@@ -119,6 +130,14 @@ public class ResourcePackManager {
         return packSha1 == null ? "" : packSha1.trim();
     }
 
+    public String getPackSource() {
+        String source = plugin.getConfig().getString("resource-pack.source", "GITHUB");
+        if (source == null || source.trim().isEmpty()) {
+            return "GITHUB";
+        }
+        return source.trim().toUpperCase(Locale.ROOT);
+    }
+
     public synchronized boolean isLocalServerActive() {
         return localServerActive;
     }
@@ -143,7 +162,8 @@ public class ResourcePackManager {
         }
 
         String configuredSha1 = plugin.getConfig().getString("resource-pack.sha1", "");
-        byte[] hash = decodeSha1(configuredSha1);
+        String effectiveSha1 = getPackSha1();
+        byte[] hash = decodeSha1(effectiveSha1);
         boolean required = plugin.getConfig().getBoolean("resource-pack.required", true);
         String prompt = plugin.getConfig().getString(
                 "resource-pack.prompt",
@@ -151,8 +171,9 @@ public class ResourcePackManager {
         );
 
         plugin.getLogger().info("A enviar resource pack para " + player.getName()
+                + " source=" + getPackSource()
                 + " url=" + url
-                + " sha1=" + safeSha1(configuredSha1)
+                + " sha1=" + safeSha1(effectiveSha1)
                 + " required=" + required
                 + " localServerActive=" + localServerActive);
 
