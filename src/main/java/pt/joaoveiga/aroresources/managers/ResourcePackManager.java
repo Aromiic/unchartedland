@@ -9,6 +9,7 @@ import pt.joaoveiga.aroresources.AroResources;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -34,6 +35,7 @@ public class ResourcePackManager {
     private File packFile;
     private String packUrl;
     private String packSha1;
+    private String packBuildToken;
     private boolean localServerActive;
 
     public ResourcePackManager(AroResources plugin) {
@@ -44,6 +46,7 @@ public class ResourcePackManager {
         stopHttpServer();
         this.packUrl = "";
         this.packSha1 = "";
+        this.packBuildToken = "";
         this.localServerActive = false;
         this.packFile = null;
 
@@ -58,6 +61,7 @@ public class ResourcePackManager {
 
         this.packFile = currentPackFile;
         this.packSha1 = computeSha1(currentPackFile);
+        this.packBuildToken = Long.toHexString(System.currentTimeMillis());
         plugin.getLogger().info("Resource pack pronto: ficheiro=" + currentPackFile.getAbsolutePath()
                 + ", tamanho=" + currentPackFile.length() + " bytes"
                 + ", sha1=" + safeSha1(this.packSha1));
@@ -119,7 +123,7 @@ public class ResourcePackManager {
         if (currentUrl.isEmpty()) {
             return "";
         }
-        return addCacheBuster(currentUrl, getPackSha1());
+        return addCacheBuster(currentUrl, getPackSha1(), packBuildToken);
     }
 
     public synchronized String getPackSha1() {
@@ -278,7 +282,11 @@ public class ResourcePackManager {
         fileName = normalizePackFileName(fileName);
 
         File target = new File(plugin.getDataFolder(), fileName.trim());
+        boolean refreshedFromBundle = refreshBundledPack(target, fileName.trim());
         if (target.exists()) {
+            if (refreshedFromBundle) {
+                plugin.getLogger().info("Resource pack embutido atualizado em " + target.getAbsolutePath());
+            }
             return target;
         }
 
@@ -295,11 +303,28 @@ public class ResourcePackManager {
         }
 
         try {
-            plugin.saveResource(fileName.trim(), false);
+            refreshBundledPack(target, fileName.trim());
         } catch (IllegalArgumentException exception) {
             plugin.getLogger().warning("Resource pack embutido nao encontrado: " + fileName.trim());
         }
         return target;
+    }
+
+    private boolean refreshBundledPack(File target, String fileName) {
+        if (target == null || fileName == null || fileName.trim().isEmpty()) {
+            return false;
+        }
+
+        try (InputStream inputStream = plugin.getResource(fileName)) {
+            if (inputStream == null) {
+                return false;
+            }
+            java.nio.file.Files.copy(inputStream, target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException exception) {
+            plugin.getLogger().warning("Falha ao atualizar o resource pack embutido " + fileName + ": " + exception.getMessage());
+            return false;
+        }
     }
 
     private String resolvePublicHost() {
@@ -392,23 +417,28 @@ public class ResourcePackManager {
         return trimmed;
     }
 
-    private String addCacheBuster(String url, String sha1) {
+    private String addCacheBuster(String url, String sha1, String buildToken) {
         if (url == null || url.trim().isEmpty()) {
             return "";
         }
 
         String normalizedUrl = url.trim();
-        String token = sha1 == null ? "" : sha1.trim();
-        if (token.isEmpty()) {
+        String hashToken = sha1 == null ? "" : sha1.trim();
+        String versionToken = buildToken == null ? "" : buildToken.trim();
+        if (hashToken.isEmpty() && versionToken.isEmpty()) {
             return normalizedUrl;
         }
 
-        if (normalizedUrl.contains("v=" + token)) {
-            return normalizedUrl;
-        }
-
+        String result = normalizedUrl;
         String separator = normalizedUrl.contains("?") ? "&" : "?";
-        return normalizedUrl + separator + "v=" + token;
+        if (!hashToken.isEmpty() && !normalizedUrl.contains("v=" + hashToken)) {
+            result += separator + "v=" + hashToken;
+            separator = "&";
+        }
+        if (!versionToken.isEmpty() && !normalizedUrl.contains("build=" + versionToken)) {
+            result += separator + "build=" + versionToken;
+        }
+        return result;
     }
 
     private boolean hasConfiguredUrl() {
